@@ -20,14 +20,24 @@ export default function MainLayout() {
         name="index"
         options={{
           title: 'SRCode',
+          // @ts-expect-error - headerRightContainerStyle exists in React Navigation but missing from Expo Router types
+          headerRightContainerStyle: {
+            justifyContent: 'center',
+          },
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push('/(main)/settings')}
               accessibilityLabel="Settings"
               accessibilityRole="button"
-              style={{ marginRight: 8 }}
+              style={{
+                paddingHorizontal: 12,
+              }}
             >
-              <Ionicons name="settings-outline" size={24} color={colors.neutral.white} />
+              <Ionicons
+                name="settings-outline"
+                size={24}
+                color={colors.neutral.white}
+              />
             </TouchableOpacity>
           ),
         }}

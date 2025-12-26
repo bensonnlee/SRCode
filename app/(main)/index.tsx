@@ -26,12 +26,20 @@ export default function BarcodeScreen() {
 
   // Handle screen brightness
   useEffect(() => {
+    let isMounted = true;
+
     const manageBrightness = async () => {
       try {
+        // Check if brightness API is available
+        const isAvailable = await Brightness.isAvailableAsync?.() ?? true;
+        if (!isAvailable || !isMounted) return;
+
         if (settings.keepScreenBright) {
           const current = await Brightness.getBrightnessAsync();
-          originalBrightnessRef.current = current;
-          await Brightness.setBrightnessAsync(1);
+          if (isMounted) {
+            originalBrightnessRef.current = current;
+            await Brightness.setBrightnessAsync(1);
+          }
         } else if (originalBrightnessRef.current !== null) {
           await Brightness.setBrightnessAsync(originalBrightnessRef.current);
           originalBrightnessRef.current = null;
@@ -44,6 +52,7 @@ export default function BarcodeScreen() {
     manageBrightness();
 
     return () => {
+      isMounted = false;
       if (originalBrightnessRef.current !== null) {
         Brightness.setBrightnessAsync(originalBrightnessRef.current).catch(() => {});
       }
