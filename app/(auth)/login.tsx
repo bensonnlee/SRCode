@@ -8,25 +8,36 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { Card } from '@components/ui/Card';
+import { Switch } from '@components/ui/Switch';
+import { useAuth } from '@hooks/useAuth';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { spacing } from '@theme/spacing';
 
 export default function LoginScreen() {
+  const auth = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    setIsLoading(true);
     setError(null);
-    // TODO: Implement login in Phase 2
-    setIsLoading(false);
-    setError('Login not implemented yet');
+
+    const success = await auth.login(username, password, rememberMe);
+
+    if (success) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(main)');
+    } else {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setError('Invalid username or password');
+    }
   };
 
   return (
@@ -52,6 +63,7 @@ export default function LoginScreen() {
               onChangeText={setUsername}
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!auth.isLoading}
             />
 
             <Input
@@ -60,6 +72,15 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              editable={!auth.isLoading}
+            />
+
+            <Switch
+              label="Remember me"
+              value={rememberMe}
+              onValueChange={setRememberMe}
+              disabled={auth.isLoading}
+              style={styles.switch}
             />
 
             {error && <Text style={styles.errorText}>{error}</Text>}
@@ -67,8 +88,8 @@ export default function LoginScreen() {
             <Button
               title="Sign In"
               onPress={handleLogin}
-              isLoading={isLoading}
-              disabled={!username || !password}
+              isLoading={auth.isLoading}
+              disabled={!username || !password || auth.isLoading}
               style={styles.button}
             />
           </Card>
@@ -107,6 +128,9 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: spacing.lg,
+  },
+  switch: {
+    marginBottom: spacing.md,
   },
   errorText: {
     color: colors.semantic.error,

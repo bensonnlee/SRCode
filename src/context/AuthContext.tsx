@@ -3,8 +3,14 @@ import type { AuthState, AuthContextValue } from '@apptypes/auth';
 import {
   getCredentials,
   getFusionToken,
+  saveCredentials,
+  saveFusionToken,
   clearAllSecureData,
 } from '@services/storage/secureStorage';
+import {
+  authenticateUser,
+  refreshAuthentication,
+} from '@services/auth/ucrAuth';
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -12,6 +18,9 @@ const initialState: AuthState = {
   user: null,
   fusionToken: null,
 };
+
+// Token expiry time: 1 hour (in milliseconds)
+const TOKEN_EXPIRY_MS = 60 * 60 * 1000;
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -38,6 +47,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: { username: credentials.username },
           fusionToken,
         });
+      } else if (credentials) {
+        // Have credentials but no valid token - try to refresh
+        setState((prev) => ({ ...prev, isLoading: true }));
+        const result = await refreshAuthentication(
+          credentials.username,
+          credentials.password
+        );
+
+        if (result.success && result.fusionToken) {
+          await saveFusionToken(result.fusionToken, TOKEN_EXPIRY_MS);
+          setState({
+            isAuthenticated: true,
+            isLoading: false,
+            user: { username: credentials.username },
+            fusionToken: result.fusionToken,
+          });
+        } else {
+          setState((prev) => ({ ...prev, isLoading: false }));
+        }
       } else {
         setState((prev) => ({ ...prev, isLoading: false }));
       }
@@ -47,14 +75,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const login = useCallback(
-    async (username: string, password: string): Promise<boolean> => {
+    async (
+      username: string,
+      password: string,
+      rememberMe: boolean
+    ): Promise<boolean> => {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // TODO: Implement actual authentication in Phase 2
-      // const result = await authenticateUser(username, password);
+      try {
+        const result = await authenticateUser(username, password);
 
-      setState((prev) => ({ ...prev, isLoading: false }));
-      return false;
+        if (result.success && result.fusionToken) {
+          // Save fusion token
+          await saveFusionToken(result.fusionToken, TOKEN_EXPIRY_MS);
+
+          // Save credentials only if "Remember me" is checked
+          if (rememberMe) {
+            await saveCredentials(username, password);
+          }
+
+          setState({
+            isAuthenticated: true,
+            isLoading: false,
+            user: { username },
+            fusionToken: result.fusionToken,
+          });
+
+          return true;
+        }
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      } catch {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
     },
     []
   );
@@ -70,8 +125,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
-    // TODO: Implement token refresh in Phase 2
-    return false;
+    try {
+      const credentials = await getCredentials();
+
+      if (!credentials) {
+        return false;
+      }
+
+      const result = await refreshAuthentication(
+        credentials.username,
+        credentials.password
+      );
+
+      if (result.success && result.fusionToken) {
+        await saveFusionToken(result.fusionToken, TOKEN_EXPIRY_MS);
+        setState((prev) => ({
+          ...prev,
+          fusionToken: result.fusionToken!,
+        }));
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
   }, []);
 
   const value: AuthContextValue = {

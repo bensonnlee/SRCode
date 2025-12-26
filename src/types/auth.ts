@@ -17,7 +17,11 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (
+    username: string,
+    password: string,
+    rememberMe: boolean
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
 }

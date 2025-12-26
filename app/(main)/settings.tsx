@@ -1,21 +1,30 @@
 import React from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Button } from '@components/ui/Button';
 import { Card } from '@components/ui/Card';
+import { useAuth } from '@hooks/useAuth';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { spacing } from '@theme/spacing';
 
 export default function SettingsScreen() {
+  const auth = useAuth();
+
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: () => {
-          // TODO: Implement logout in Phase 2
+        onPress: async () => {
+          await auth.logout();
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success
+          );
+          router.replace('/(auth)/login');
         },
       },
     ]);
@@ -28,7 +37,9 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Username</Text>
-            <Text style={styles.infoValue}>Not logged in</Text>
+            <Text style={styles.infoValue}>
+              {auth.user?.username ?? 'Not logged in'}
+            </Text>
           </View>
         </Card>
 
