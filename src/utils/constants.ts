@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   CREDENTIALS: 'user_credentials',
   FUSION_TOKEN: 'fusion_token',
   TOKEN_EXPIRY: 'token_expiry',
+  SETTINGS: 'app_settings',
 } as const;
 
 export const TIMING = {

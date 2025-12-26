@@ -9,7 +9,8 @@ export interface UseBarcodeReturn extends BarcodeState {
 
 export function useBarcode(
   fusionToken: string | null,
-  autoRefreshInterval: number = TIMING.BARCODE_REFRESH_INTERVAL
+  autoRefreshInterval: number = TIMING.BARCODE_REFRESH_INTERVAL,
+  autoRefreshEnabled: boolean = true
 ): UseBarcodeReturn {
   const refreshIntervalSeconds = autoRefreshInterval / 1000;
 
@@ -68,19 +69,21 @@ export function useBarcode(
     // Fetch initial barcode
     refresh();
 
-    // Set up auto-refresh interval
-    autoRefreshRef.current = setInterval(() => {
-      refresh();
-    }, autoRefreshInterval);
+    // Set up auto-refresh interval only if enabled
+    if (autoRefreshEnabled) {
+      autoRefreshRef.current = setInterval(() => {
+        refresh();
+      }, autoRefreshInterval);
 
-    // Set up countdown timer (updates every second)
-    countdownRef.current = setInterval(() => {
-      setState((prev) => ({
-        ...prev,
-        timeUntilRefresh:
-          prev.timeUntilRefresh > 1 ? prev.timeUntilRefresh - 1 : refreshIntervalSeconds,
-      }));
-    }, 1000);
+      // Set up countdown timer (updates every second)
+      countdownRef.current = setInterval(() => {
+        setState((prev) => ({
+          ...prev,
+          timeUntilRefresh:
+            prev.timeUntilRefresh > 1 ? prev.timeUntilRefresh - 1 : refreshIntervalSeconds,
+        }));
+      }, 1000);
+    }
 
     return () => {
       isMountedRef.current = false;
@@ -91,7 +94,7 @@ export function useBarcode(
         clearInterval(countdownRef.current);
       }
     };
-  }, [fusionToken, autoRefreshInterval, refresh, refreshIntervalSeconds]);
+  }, [fusionToken, autoRefreshInterval, autoRefreshEnabled, refresh, refreshIntervalSeconds]);
 
   return {
     ...state,

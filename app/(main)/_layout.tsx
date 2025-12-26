@@ -1,4 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@theme/colors';
 
 export default function MainLayout() {
@@ -18,6 +20,16 @@ export default function MainLayout() {
         name="index"
         options={{
           title: 'SRCode',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(main)/settings')}
+              accessibilityLabel="Settings"
+              accessibilityRole="button"
+              style={{ marginRight: 8 }}
+            >
+              <Ionicons name="settings-outline" size={24} color={colors.neutral.white} />
+            </TouchableOpacity>
+          ),
         }}
       />
       <Stack.Screen

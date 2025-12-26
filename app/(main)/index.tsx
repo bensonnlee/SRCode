@@ -1,21 +1,54 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as Brightness from 'expo-brightness';
 import { BarcodeDisplay } from '@components/barcode/BarcodeDisplay';
 import { Button } from '@components/ui/Button';
 import { Card } from '@components/ui/Card';
 import { useAuth } from '@hooks/useAuth';
 import { useBarcode } from '@hooks/useBarcode';
+import { useSettings } from '@context/SettingsContext';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { spacing } from '@theme/spacing';
 
 export default function BarcodeScreen() {
   const auth = useAuth();
+  const settings = useSettings();
+  const originalBrightnessRef = useRef<number | null>(null);
+
   const { barcodeId, isLoading, error, timeUntilRefresh, refresh } = useBarcode(
-    auth.fusionToken
+    auth.fusionToken,
+    undefined,
+    settings.autoRefresh
   );
+
+  // Handle screen brightness
+  useEffect(() => {
+    const manageBrightness = async () => {
+      if (settings.keepScreenBright) {
+        // Store original brightness
+        const current = await Brightness.getBrightnessAsync();
+        originalBrightnessRef.current = current;
+        // Set to maximum brightness
+        await Brightness.setBrightnessAsync(1);
+      } else if (originalBrightnessRef.current !== null) {
+        // Restore original brightness
+        await Brightness.setBrightnessAsync(originalBrightnessRef.current);
+        originalBrightnessRef.current = null;
+      }
+    };
+
+    manageBrightness();
+
+    return () => {
+      // Restore brightness on unmount
+      if (originalBrightnessRef.current !== null) {
+        Brightness.setBrightnessAsync(originalBrightnessRef.current);
+      }
+    };
+  }, [settings.keepScreenBright]);
 
   const handleRefresh = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -43,15 +76,17 @@ export default function BarcodeScreen() {
             isLoading={isLoading && !barcodeId}
           />
 
-          <View
-            style={styles.timerContainer}
-            accessible={true}
-            accessibilityLabel={`Refreshing in ${timeUntilRefresh} seconds`}
-            accessibilityLiveRegion="polite"
-          >
-            <Text style={styles.timerLabel}>Refreshing in</Text>
-            <Text style={styles.timerValue}>{timeUntilRefresh}s</Text>
-          </View>
+          {settings.autoRefresh && (
+            <View
+              style={styles.timerContainer}
+              accessible={true}
+              accessibilityLabel={`Refreshing in ${timeUntilRefresh} seconds`}
+              accessibilityLiveRegion="polite"
+            >
+              <Text style={styles.timerLabel}>Refreshing in</Text>
+              <Text style={styles.timerValue}>{timeUntilRefresh}s</Text>
+            </View>
+          )}
         </Card>
 
         {error && (
