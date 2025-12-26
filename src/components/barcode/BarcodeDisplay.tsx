@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Barcode from 'react-native-barcode-svg';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
@@ -8,14 +8,11 @@ import type { BarcodeDisplayProps } from '@apptypes/barcode';
 
 export function BarcodeDisplay({
   value,
-  width,
   height = 120,
   showValue = true,
 }: BarcodeDisplayProps) {
-  const { width: screenWidth } = useWindowDimensions();
-  const barcodeMaxWidth = width ?? screenWidth - spacing.lg * 2;
-
-  if (!value) {
+  // Show placeholder if value is empty, null, undefined, or not a string
+  if (!value || typeof value !== 'string' || value.trim().length === 0) {
     return (
       <View style={[styles.container, styles.placeholder]}>
         <Text style={styles.placeholderText}>No barcode available</Text>
@@ -29,7 +26,7 @@ export function BarcodeDisplay({
         <Barcode
           value={value}
           format="CODE128"
-          maxWidth={barcodeMaxWidth}
+          singleBarWidth={2}
           height={height}
           lineColor={colors.neutral.black}
           backgroundColor={colors.neutral.white}

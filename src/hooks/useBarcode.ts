@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TIMING } from '@utils/constants';
+import { generateBarcodeId } from '@services/auth/ucrAuth';
 import type { BarcodeState } from '@apptypes/barcode';
 
 export interface UseBarcodeReturn extends BarcodeState {
@@ -10,14 +11,18 @@ export function useBarcode(
   fusionToken: string | null,
   autoRefreshInterval: number = TIMING.BARCODE_REFRESH_INTERVAL
 ): UseBarcodeReturn {
+  const refreshIntervalSeconds = autoRefreshInterval / 1000;
+
   const [state, setState] = useState<BarcodeState>({
     barcodeId: null,
     isLoading: false,
     error: null,
-    timeUntilRefresh: autoRefreshInterval / 1000,
+    timeUntilRefresh: refreshIntervalSeconds,
   });
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(true);
 
   const refresh = useCallback(async () => {
     if (!fusionToken) {
@@ -31,26 +36,61 @@ export function useBarcode(
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // TODO: Implement actual barcode generation in Phase 3
-    // const result = await generateBarcodeId(fusionToken);
+    const result = await generateBarcodeId(fusionToken);
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: false,
-      // barcodeId: result.barcodeId,
-      timeUntilRefresh: autoRefreshInterval / 1000,
-    }));
-  }, [fusionToken, autoRefreshInterval]);
+    if (!isMountedRef.current) return;
+
+    if (result.success && result.barcodeId) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        barcodeId: result.barcodeId!,
+        error: null,
+        timeUntilRefresh: refreshIntervalSeconds,
+      }));
+    } else {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: result.error || 'Failed to generate barcode',
+      }));
+    }
+  }, [fusionToken, refreshIntervalSeconds]);
 
   useEffect(() => {
-    // TODO: Implement auto-refresh timer in Phase 3
-    const currentInterval = intervalRef.current;
+    isMountedRef.current = true;
+
+    if (!fusionToken) {
+      return;
+    }
+
+    // Fetch initial barcode
+    refresh();
+
+    // Set up auto-refresh interval
+    autoRefreshRef.current = setInterval(() => {
+      refresh();
+    }, autoRefreshInterval);
+
+    // Set up countdown timer (updates every second)
+    countdownRef.current = setInterval(() => {
+      setState((prev) => ({
+        ...prev,
+        timeUntilRefresh:
+          prev.timeUntilRefresh > 1 ? prev.timeUntilRefresh - 1 : refreshIntervalSeconds,
+      }));
+    }, 1000);
+
     return () => {
-      if (currentInterval) {
-        clearInterval(currentInterval);
+      isMountedRef.current = false;
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+      }
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
       }
     };
-  }, [fusionToken, autoRefreshInterval, refresh]);
+  }, [fusionToken, autoRefreshInterval, refresh, refreshIntervalSeconds]);
 
   return {
     ...state,
