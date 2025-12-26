@@ -50,6 +50,9 @@ export function Button({
       ]}
       disabled={disabled || isLoading}
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || isLoading, busy: isLoading }}
       {...props}
     >
       {isLoading ? (

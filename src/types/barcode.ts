@@ -16,4 +16,5 @@ export interface BarcodeDisplayProps {
   width?: number;
   height?: number;
   showValue?: boolean;
+  isLoading?: boolean;
 }

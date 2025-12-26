@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Barcode from 'react-native-barcode-svg';
+import { Skeleton } from '@components/ui/Skeleton';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { spacing } from '@theme/spacing';
@@ -10,18 +11,50 @@ export function BarcodeDisplay({
   value,
   height = 120,
   showValue = true,
+  isLoading = false,
 }: BarcodeDisplayProps) {
+  // Show skeleton when loading
+  if (isLoading) {
+    return (
+      <View
+        style={styles.container}
+        accessible={true}
+        accessibilityLabel="Loading barcode"
+      >
+        <Skeleton width={250} height={height} borderRadius={4} />
+        {showValue && (
+          <Skeleton
+            width={150}
+            height={24}
+            borderRadius={4}
+            style={styles.skeletonText}
+          />
+        )}
+      </View>
+    );
+  }
+
   // Show placeholder if value is empty, null, undefined, or not a string
   if (!value || typeof value !== 'string' || value.trim().length === 0) {
     return (
-      <View style={[styles.container, styles.placeholder]}>
+      <View
+        style={[styles.container, styles.placeholder]}
+        accessible={true}
+        accessibilityRole="text"
+        accessibilityLabel="No barcode available"
+      >
         <Text style={styles.placeholderText}>No barcode available</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityRole="image"
+      accessibilityLabel={`Barcode: ${value}`}
+    >
       <View style={styles.barcodeWrapper}>
         <Barcode
           value={value}
@@ -62,5 +95,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.medium,
     color: colors.neutral.gray800,
     letterSpacing: 2,
+  },
+  skeletonText: {
+    marginTop: spacing.sm,
   },
 });

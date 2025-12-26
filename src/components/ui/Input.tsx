@@ -52,6 +52,8 @@ export function Input({
         placeholderTextColor={colors.neutral.gray500}
         onFocus={handleFocus}
         onBlur={handleBlur}
+        accessibilityLabel={label || props.placeholder}
+        accessibilityHint={error ? `Error: ${error}` : undefined}
         {...props}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}

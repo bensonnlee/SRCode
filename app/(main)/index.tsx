@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { BarcodeDisplay } from '@components/barcode/BarcodeDisplay';
 import { Button } from '@components/ui/Button';
 import { Card } from '@components/ui/Card';
@@ -17,6 +18,8 @@ export default function BarcodeScreen() {
   );
 
   const handleRefresh = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     // If there's an error, try refreshing the token first
     if (error) {
       const refreshed = await auth.refreshToken();
@@ -34,15 +37,32 @@ export default function BarcodeScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.content}>
         <Card style={styles.barcodeCard}>
-          <BarcodeDisplay value={barcodeId ?? ''} showValue />
+          <BarcodeDisplay
+            value={barcodeId ?? ''}
+            showValue
+            isLoading={isLoading && !barcodeId}
+          />
 
-          <View style={styles.timerContainer}>
+          <View
+            style={styles.timerContainer}
+            accessible={true}
+            accessibilityLabel={`Refreshing in ${timeUntilRefresh} seconds`}
+            accessibilityLiveRegion="polite"
+          >
             <Text style={styles.timerLabel}>Refreshing in</Text>
             <Text style={styles.timerValue}>{timeUntilRefresh}s</Text>
           </View>
         </Card>
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && (
+          <Text
+            style={styles.errorText}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="assertive"
+          >
+            {error}
+          </Text>
+        )}
 
         <Button
           title="Refresh Now"

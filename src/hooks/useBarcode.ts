@@ -52,6 +52,7 @@ export function useBarcode(
       setState((prev) => ({
         ...prev,
         isLoading: false,
+        barcodeId: null,
         error: result.error || 'Failed to generate barcode',
       }));
     }

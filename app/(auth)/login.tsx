@@ -10,6 +10,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { Card } from '@components/ui/Card';
@@ -26,6 +32,22 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const shakeX = useSharedValue(0);
+
+  const shakeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeX.value }],
+  }));
+
+  const triggerShake = () => {
+    shakeX.value = withSequence(
+      withTiming(-10, { duration: 50 }),
+      withTiming(10, { duration: 50 }),
+      withTiming(-10, { duration: 50 }),
+      withTiming(10, { duration: 50 }),
+      withTiming(0, { duration: 50 })
+    );
+  };
+
   const handleLogin = async () => {
     setError(null);
 
@@ -36,6 +58,7 @@ export default function LoginScreen() {
       router.replace('/(main)');
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      triggerShake();
       setError('Invalid username or password');
     }
   };
@@ -55,44 +78,54 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>UCR Authentication</Text>
           </View>
 
-          <Card style={styles.card}>
-            <Input
-              label="UCR NetID"
-              placeholder="Enter your NetID"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!auth.isLoading}
-            />
+          <Animated.View style={shakeStyle}>
+            <Card style={styles.card}>
+              <Input
+                label="UCR NetID"
+                placeholder="Enter your NetID"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!auth.isLoading}
+              />
 
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!auth.isLoading}
-            />
+              <Input
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!auth.isLoading}
+              />
 
-            <Switch
-              label="Remember me"
-              value={rememberMe}
-              onValueChange={setRememberMe}
-              disabled={auth.isLoading}
-              style={styles.switch}
-            />
+              <Switch
+                label="Remember me"
+                value={rememberMe}
+                onValueChange={setRememberMe}
+                disabled={auth.isLoading}
+                style={styles.switch}
+              />
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+              {error && (
+                <Text
+                  style={styles.errorText}
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="assertive"
+                >
+                  {error}
+                </Text>
+              )}
 
-            <Button
-              title="Sign In"
-              onPress={handleLogin}
-              isLoading={auth.isLoading}
-              disabled={!username || !password || auth.isLoading}
-              style={styles.button}
-            />
-          </Card>
+              <Button
+                title="Sign In"
+                onPress={handleLogin}
+                isLoading={auth.isLoading}
+                disabled={!username || !password || auth.isLoading}
+                style={styles.button}
+              />
+            </Card>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

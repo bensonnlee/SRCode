@@ -7,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 
@@ -25,6 +26,11 @@ export function Switch({
   disabled = false,
   style,
 }: SwitchProps) {
+  const handleValueChange = (newValue: boolean) => {
+    Haptics.selectionAsync();
+    onValueChange(newValue);
+  };
+
   return (
     <View style={[styles.container, style]}>
       {label && (
@@ -34,7 +40,7 @@ export function Switch({
       )}
       <RNSwitch
         value={value}
-        onValueChange={onValueChange}
+        onValueChange={handleValueChange}
         disabled={disabled}
         trackColor={{
           false: colors.neutral.gray200,
@@ -42,6 +48,9 @@ export function Switch({
         }}
         thumbColor={value ? colors.primary.dandelion : colors.neutral.white}
         ios_backgroundColor={colors.neutral.gray200}
+        accessibilityRole="switch"
+        accessibilityLabel={label}
+        accessibilityState={{ checked: value, disabled }}
       />
     </View>
   );
