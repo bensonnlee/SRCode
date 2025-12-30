@@ -11,7 +11,6 @@ SRCode generates time-sensitive barcodes for UCR Student Recreation Center authe
 - **Quick Access** - Your barcode is ready instantly after login
 - **Auto-Refresh** - Barcode automatically updates to stay valid
 - **Secure** - Your credentials are stored securely on your device
-- **Offline Support** - Works even with spotty connectivity
 
 ## How to Use
 
