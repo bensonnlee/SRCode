@@ -20,3 +20,10 @@ export const TIMING = {
 export const APP_CONFIG = {
   FUSION_ID: '124',
 } as const;
+
+export const DEMO_MODE = {
+  TRIGGER_USERNAME: 'demo',
+  DISPLAY_NAME: 'Demo User',
+  FUSION_TOKEN: 'DEMO_TOKEN_12345',
+  BARCODE_IDS: ['DEMO1234567890', 'DEMO0987654321', 'DEMO1357924680', 'DEMO2468135790'],
+} as const;

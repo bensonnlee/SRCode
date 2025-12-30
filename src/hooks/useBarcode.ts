@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TIMING } from '@utils/constants';
+import { TIMING, DEMO_MODE } from '@utils/constants';
 import { generateBarcodeId } from '@services/auth/ucrAuth';
 import type { BarcodeState } from '@apptypes/barcode';
 
@@ -10,7 +10,8 @@ export interface UseBarcodeReturn extends BarcodeState {
 export function useBarcode(
   fusionToken: string | null,
   autoRefreshInterval: number = TIMING.BARCODE_REFRESH_INTERVAL,
-  autoRefreshEnabled: boolean = true
+  autoRefreshEnabled: boolean = true,
+  isDemoMode: boolean = false
 ): UseBarcodeReturn {
   const refreshIntervalSeconds = autoRefreshInterval / 1000;
 
@@ -24,8 +25,23 @@ export function useBarcode(
   const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
+  const demoBarcodeIndexRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    // In demo mode, alternate between demo barcodes without API call
+    if (isDemoMode) {
+      const barcodeId = DEMO_MODE.BARCODE_IDS[demoBarcodeIndexRef.current];
+      demoBarcodeIndexRef.current = (demoBarcodeIndexRef.current + 1) % DEMO_MODE.BARCODE_IDS.length;
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        barcodeId,
+        error: null,
+        timeUntilRefresh: refreshIntervalSeconds,
+      }));
+      return;
+    }
+
     if (!fusionToken) {
       setState((prev) => ({
         ...prev,
@@ -57,12 +73,13 @@ export function useBarcode(
         error: result.error || 'Failed to generate barcode',
       }));
     }
-  }, [fusionToken, refreshIntervalSeconds]);
+  }, [fusionToken, refreshIntervalSeconds, isDemoMode]);
 
   useEffect(() => {
     isMountedRef.current = true;
 
-    if (!fusionToken) {
+    // In demo mode, we still need fusionToken to be set (even if fake)
+    if (!fusionToken && !isDemoMode) {
       return;
     }
 
@@ -94,7 +111,7 @@ export function useBarcode(
         clearInterval(countdownRef.current);
       }
     };
-  }, [fusionToken, autoRefreshInterval, autoRefreshEnabled, refresh, refreshIntervalSeconds]);
+  }, [fusionToken, autoRefreshInterval, autoRefreshEnabled, refresh, refreshIntervalSeconds, isDemoMode]);
 
   return {
     ...state,

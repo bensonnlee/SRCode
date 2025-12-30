@@ -21,7 +21,8 @@ export default function BarcodeScreen() {
   const { barcodeId, isLoading, error, timeUntilRefresh, refresh } = useBarcode(
     auth.fusionToken,
     undefined,
-    settings.autoRefresh
+    settings.autoRefresh,
+    auth.isDemoMode
   );
 
   // Handle screen brightness

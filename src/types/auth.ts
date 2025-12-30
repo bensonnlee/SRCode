@@ -12,6 +12,7 @@ export interface AuthResult {
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isDemoMode: boolean;
   user: { username: string } | null;
   fusionToken: string | null;
 }

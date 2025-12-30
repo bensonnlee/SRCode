@@ -11,10 +11,12 @@ import {
   authenticateUser,
   refreshAuthentication,
 } from '@services/auth/ucrAuth';
+import { DEMO_MODE } from '@utils/constants';
 
 const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
+  isDemoMode: false,
   user: null,
   fusionToken: null,
 };
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setState({
           isAuthenticated: true,
           isLoading: false,
+          isDemoMode: false,
           user: { username: credentials.username },
           fusionToken,
         });
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setState({
             isAuthenticated: true,
             isLoading: false,
+            isDemoMode: false,
             user: { username: credentials.username },
             fusionToken: result.fusionToken,
           });
@@ -80,6 +84,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       password: string,
       rememberMe: boolean
     ): Promise<boolean> => {
+      // Check for demo mode trigger
+      if (username.toLowerCase() === DEMO_MODE.TRIGGER_USERNAME) {
+        setState({
+          isAuthenticated: true,
+          isLoading: false,
+          isDemoMode: true,
+          user: { username: DEMO_MODE.DISPLAY_NAME },
+          fusionToken: DEMO_MODE.FUSION_TOKEN,
+        });
+        return true;
+      }
+
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
@@ -97,6 +113,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setState({
             isAuthenticated: true,
             isLoading: false,
+            isDemoMode: false,
             user: { username },
             fusionToken: result.fusionToken,
           });
@@ -119,6 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState({
       isAuthenticated: false,
       isLoading: false,
+      isDemoMode: false,
       user: null,
       fusionToken: null,
     });
