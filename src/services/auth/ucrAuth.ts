@@ -258,9 +258,32 @@ export async function generateBarcodeId(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Failed to generate barcode';
+
+    // Provide user-friendly error messages
+    if (
+      message.includes('status code 4') ||
+      message.includes('status code 5')
+    ) {
+      return {
+        success: false,
+        error: 'Unable to load barcode. Tap refresh to try again.',
+      };
+    }
+
+    if (
+      message.includes('timeout') ||
+      message.includes('Network') ||
+      message.includes('ECONNREFUSED')
+    ) {
+      return {
+        success: false,
+        error: 'Network error. Please check your connection.',
+      };
+    }
+
     return {
       success: false,
-      error: message,
+      error: 'Unable to load barcode. Tap refresh to try again.',
     };
   }
 }
