@@ -79,10 +79,15 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
   },
   primary: {
     backgroundColor: colors.primary.blue,
+    shadowColor: colors.primary.blue,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   secondary: {
     backgroundColor: colors.primary.gold,

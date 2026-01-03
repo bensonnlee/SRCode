@@ -5,7 +5,7 @@ import { spacing, borderRadius } from '@theme/spacing';
 
 export interface CardProps {
   children: React.ReactNode;
-  variant?: 'elevated' | 'outlined' | 'filled';
+  variant?: 'elevated' | 'outlined' | 'filled' | 'premium';
   padding?: keyof typeof spacing;
   style?: StyleProp<ViewStyle>;
 }
@@ -41,6 +41,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+  },
+  premium: {
+    shadowColor: colors.neutral.black,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   outlined: {
     borderWidth: 1,
